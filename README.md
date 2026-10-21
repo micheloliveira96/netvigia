@@ -34,6 +34,20 @@ Em Debian/Ubuntu:
 
 O pacote gerado fica em build/netvigia_0.1.0_amd64.deb. A compilação precisa de ambiente Linux Debian/Ubuntu; GitHub/Vercel ainda não geram um pacote testado automaticamente.
 
+## Teste local com Docker Desktop (Windows)
+O repositório também inclui Dockerfile e docker-compose.yml para experimentar o serviço no computador que já usa Docker Desktop.
+
+    git clone https://github.com/micheloliveira96/netvigia.git
+    cd netvigia
+    copy .env.example .env
+
+Edite o arquivo .env e troque NETVIGIA_API_KEY por uma chave aleatória longa. Depois execute:
+
+    docker compose up -d --build
+    docker compose logs -f netvigia
+
+Abra http://localhost:8787. Para conectar o agente Windows, use a URL http://IP-DA-MAQUINA-WINDOWS:8787 se o agente estiver em outra máquina; para a própria máquina, localhost pode ser usado. No Windows, veja o IP LAN com ipconfig. Não encaminhe a porta 8787 no router para a Internet. A rede bridge do Docker Desktop consegue alcançar muitos roteadores LAN, mas isso deve ser validado no ambiente real.
+
 ## API
 - GET /api/health — sem chave.
 - GET /api/devices — com X-API-Key ou Authorization: Bearer <chave>.
