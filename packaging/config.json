@@ -1,0 +1,7 @@
+{
+  "listen": "0.0.0.0:8787",
+  "data_dir": "/var/lib/netvigia",
+  "api_key": "TROQUE-ESTA-CHAVE-POR-UMA-CHAVE-ALEATORIA-FORTE",
+  "poll_minutes": 60,
+  "snmp_community": ""
+}
