@@ -1,0 +1,36 @@
+name: Build NetVigia Debian package
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agent/**'
+      - 'packaging/**'
+      - 'scripts/**'
+      - 'index.html'
+      - '.github/workflows/build-deb.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+      - name: Install packaging dependencies
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev iputils-ping snmp
+      - name: Compile and build package
+        run: ./scripts/build-deb.sh 0.1.0 amd64
+      - name: Validate Debian package
+        run: dpkg-deb --info build/netvigia_0.1.0_amd64.deb && dpkg-deb --contents build/netvigia_0.1.0_amd64.deb
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: netvigia-deb-amd64
+          path: build/netvigia_0.1.0_amd64.deb
+          if-no-files-found: error
+          retention-days: 30
