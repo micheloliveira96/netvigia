@@ -28,6 +28,7 @@ set -e
 getent group netvigia >/dev/null || groupadd --system netvigia
 id netvigia >/dev/null 2>&1 || useradd --system --gid netvigia --home-dir /var/lib/netvigia --shell /usr/sbin/nologin netvigia
 chown -R netvigia:netvigia /var/lib/netvigia
+chown root:netvigia /etc/netvigia/config.json
 if grep -q "GENERATE-A-UNIQUE-KEY-DURING-INSTALL" /etc/netvigia/config.json; then KEY=$(od -An -N32 -tx1 /dev/urandom | tr -d " \\n"); sed -i "s/GENERATE-A-UNIQUE-KEY-DURING-INSTALL/$KEY/" /etc/netvigia/config.json; fi
 chmod 0640 /etc/netvigia/config.json
 systemctl daemon-reload
