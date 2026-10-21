@@ -24,7 +24,7 @@ jobs:
       - name: Install packaging dependencies
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev iputils-ping snmp
       - name: Compile and build package
-        run: ./scripts/build-deb.sh 0.1.0 amd64
+        run: bash ./scripts/build-deb.sh 0.1.0 amd64
       - name: Validate Debian package
         run: dpkg-deb --info build/netvigia_0.1.0_amd64.deb && dpkg-deb --contents build/netvigia_0.1.0_amd64.deb
       - name: Upload .deb artifact
