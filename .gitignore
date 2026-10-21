@@ -1,0 +1,5 @@
+.env
+build/
+agent/netvigia
+*.deb
+*.log
