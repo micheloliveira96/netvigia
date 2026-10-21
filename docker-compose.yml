@@ -1,0 +1,25 @@
+services:
+  netvigia:
+    build: .
+    image: netvigia:0.1.0
+    container_name: netvigia
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      NETVIGIA_LISTEN: "0.0.0.0:8787"
+      NETVIGIA_DATA_DIR: "/var/lib/netvigia"
+      NETVIGIA_POLL_MINUTES: "60"
+      NETVIGIA_API_KEY: "${NETVIGIA_API_KEY:?Copie .env.example para .env e defina uma chave forte}"
+      NETVIGIA_SNMP_COMMUNITY: "${NETVIGIA_SNMP_COMMUNITY:-}"
+    volumes:
+      - netvigia_data:/var/lib/netvigia
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_RAW
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  netvigia_data:
