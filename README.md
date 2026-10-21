@@ -10,7 +10,7 @@ NetVigia é uma implementação independente. A documentação pública do Monst
 - Endpoint para ingestão de métricas de agentes Windows/Linux.
 - Painel estático servido pelo serviço e script para gerar pacote Debian amd64.
 
-**Limites honestos:** MVP inicial; ainda não tem autenticação multiutilizador, TLS próprio, PostgreSQL, gráficos alimentados por métricas reais, descoberta ativa de rede, SNMPv3 validado, cálculo de banda em bits/s por deltas, nem teste de instalação end-to-end. Não exponha a API diretamente à Internet. Use LAN confiável ou VPN e HTTPS reverse proxy. Troque a chave de API antes de usar.
+**Limites honestos:** MVP inicial; ainda não tem autenticação multiutilizador, TLS próprio, PostgreSQL, gráficos alimentados por métricas reais, descoberta ativa de rede, SNMPv3 validado, cálculo de banda em bits/s por deltas, nem teste de instalação end-to-end. O instalador gera uma chave de API aleatória e o serviço escuta na interface configurada. Não exponha a porta 8787 diretamente à Internet: limite-a à LAN por firewall ou use VPN e HTTPS reverse proxy. Guarde a chave fora de repositórios e partilhas.
 
 ## Compilar e executar em desenvolvimento
 Requisitos: Go 1.22+, Linux e ping. Para SNMP, instale o pacote snmp.
@@ -53,7 +53,7 @@ O pacote gerado fica em build/netvigia_0.1.0_amd64.deb. A compilação precisa d
 1. Cadastre o PC com tipo windows e o endereço/IP.
 2. Edite agents/windows/netvigia-agent.ps1 com URL do servidor, ID do equipamento e chave.
 3. Agende no Task Scheduler (por exemplo, a cada 5 minutos) executando PowerShell. O servidor precisa ser acessível pela LAN/VPN; libere a porta 8787 apenas para redes confiáveis.
-4. O script envia CPU, memória, espaço livre em disco e uptime.
+4. O script envia CPU, memória, espaço livre em disco e uptime. O intervalo do agente é definido no Agendador de Tarefas; por exemplo, a cada 5 minutos.
 
 ### Servidor Docker/Linux
 - Instale NetVigia no host Linux para monitorar a disponibilidade dos equipamentos e servir o painel local.
