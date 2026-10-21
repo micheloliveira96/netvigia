@@ -30,9 +30,11 @@ id netvigia >/dev/null 2>&1 || useradd --system --gid netvigia --home-dir /var/l
 chown -R netvigia:netvigia /var/lib/netvigia
 chown root:netvigia /etc/netvigia/config.json
 if grep -q "GENERATE-A-UNIQUE-KEY-DURING-INSTALL" /etc/netvigia/config.json; then KEY=$(od -An -N32 -tx1 /dev/urandom | tr -d " \\n"); sed -i "s/GENERATE-A-UNIQUE-KEY-DURING-INSTALL/$KEY/" /etc/netvigia/config.json; fi
+chown root:netvigia /etc/netvigia/config.json
 chmod 0640 /etc/netvigia/config.json
 systemctl daemon-reload
 systemctl enable netvigia.service
+systemctl start netvigia.service || true
 printf "NetVigia instalado. Troque api_key em /etc/netvigia/config.json e reinicie o serviço.\n"
 EOF
 chmod 0755 "$BUILD/DEBIAN/postinst"
