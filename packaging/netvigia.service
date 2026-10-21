@@ -1,0 +1,25 @@
+[Unit]
+Description=NetVigia - Monitoramento de Rede
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=netvigia
+Group=netvigia
+EnvironmentFile=-/etc/default/netvigia
+ExecStart=/usr/bin/netvigia
+Restart=on-failure
+RestartSec=3
+StateDirectory=netvigia
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/netvigia
+AmbientCapabilities=CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_RAW
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
