@@ -7,6 +7,10 @@ on:
       - 'packaging/**'
       - 'scripts/**'
       - 'index.html'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.env.example'
+      - 'agents/**'
       - '.github/workflows/build-deb.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +31,8 @@ jobs:
         run: bash ./scripts/build-deb.sh 0.1.0 amd64
       - name: Validate Debian package
         run: dpkg-deb --info build/netvigia_0.1.0_amd64.deb && dpkg-deb --contents build/netvigia_0.1.0_amd64.deb
+      - name: Build Docker image
+        run: docker build -t netvigia:ci .
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
         with:
