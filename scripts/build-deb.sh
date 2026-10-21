@@ -18,6 +18,7 @@ Version: $VERSION
 Section: net
 Priority: optional
 Architecture: $ARCH
+Depends: iputils-ping
 Maintainer: NetVigia Project
 Description: Serviço independente de monitoramento de redes e servidores
  Monitora disponibilidade ICMP e recebe métricas de agentes autorizados.
