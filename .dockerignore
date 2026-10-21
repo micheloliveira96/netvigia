@@ -1,0 +1,5 @@
+.git
+.env
+build/
+*.deb
+agent/netvigia
