@@ -28,7 +28,7 @@ func main() {
  cfgPath:=os.Getenv("NETVIGIA_CONFIG"); if cfgPath=="" { cfgPath="/etc/netvigia/config.json" }
  cfg:=Config{Listen:"127.0.0.1:8787",DataDir:"/var/lib/netvigia",PollMinutes:60}
  if b,e:=os.ReadFile(cfgPath); e==nil { if e=json.Unmarshal(b,&cfg); e!=nil { log.Fatalf("configuração inválida: %v",e) } }
- if cfg.Listen=="" { cfg.Listen="127.0.0.1:8787" }; if cfg.DataDir=="" { cfg.DataDir="/var/lib/netvigia" }; if cfg.PollMinutes<1 { cfg.PollMinutes=60 }
+ if v:=os.Getenv("NETVIGIA_LISTEN"); v!="" { cfg.Listen=v }; if v:=os.Getenv("NETVIGIA_DATA_DIR"); v!="" { cfg.DataDir=v }; if v:=os.Getenv("NETVIGIA_API_KEY"); v!="" { cfg.APIKey=v }; if v:=os.Getenv("NETVIGIA_SNMP_COMMUNITY"); v!="" { cfg.SNMPCommunity=v }; if v:=os.Getenv("NETVIGIA_POLL_MINUTES"); v!="" { if n,e:=strconv.Atoi(v); e==nil && n>0 { cfg.PollMinutes=n } }; if cfg.Listen=="" { cfg.Listen="127.0.0.1:8787" }; if cfg.DataDir=="" { cfg.DataDir="/var/lib/netvigia" }; if cfg.PollMinutes<1 { cfg.PollMinutes=60 }
  if e:=os.MkdirAll(cfg.DataDir,0750); e!=nil { log.Fatal(e) }
  s:=&Server{cfg:cfg,path:filepath.Join(cfg.DataDir,"state.json")}; s.load()
  mux:=http.NewServeMux(); mux.HandleFunc("/api/health",s.health); mux.HandleFunc("/api/devices",s.auth(s.devices)); mux.HandleFunc("/api/devices/",s.auth(s.deviceByID)); mux.HandleFunc("/api/metrics",s.auth(s.metrics)); mux.HandleFunc("/api/agent/metrics",s.auth(s.agentMetrics)); mux.HandleFunc("/api/check-now",s.auth(s.checkNow)); mux.Handle("/",s.web())
