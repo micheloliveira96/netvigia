@@ -1,31 +1,64 @@
-# NetVigia — Central de Redes
+# NetVigia — Central de Monitoramento
 
-Projeto independente para desenvolvimento de uma plataforma própria de monitoramento de redes, em português do Brasil.
+NetVigia é uma implementação independente. A documentação pública do Monsta foi consultada para observar padrões funcionais (inventário, monitores automáticos, SNMP/ICMP e agentes); nenhum código ou recurso proprietário do Monsta é reutilizado.
 
-## Estado desta versão
-Esta primeira entrega contém uma interface web responsiva de demonstração com visão geral, inventário, pesquisa e filtros, cadastro temporário, central de alertas, mapa ilustrativo, formulário de descoberta, relatórios, exportação CSV e tema claro/escuro.
+## Estado do MVP 0.1.0
+- Serviço Go para Linux com API REST protegida por chave e persistência local em JSON.
+- Inventário de equipamentos, verificação ICMP/Ping e histórico de métricas.
+- Agendamento padrão a cada 60 minutos, configurável.
+- SNMP opcional através de snmpget do sistema para uptime e contadores IF-MIB, se configurado o índice da interface.
+- Endpoint para ingestão de métricas de agentes Windows/Linux.
+- Painel estático servido pelo serviço e script para gerar pacote Debian amd64.
 
-**Atenção:** todos os dispositivos, alertas, gráficos e métricas atuais são fictícios. Nenhuma rede é monitorada nesta versão. O cadastro é temporário na sessão do navegador. Não existe ainda autenticação real, persistência, API, motor ICMP/SNMP ou descoberta ativa.
+**Limites honestos:** MVP inicial; ainda não tem autenticação multiutilizador, TLS próprio, PostgreSQL, gráficos alimentados por métricas reais, descoberta ativa de rede, SNMPv3 validado, cálculo de banda em bits/s por deltas, nem teste de instalação end-to-end. Não exponha a API diretamente à Internet. Use LAN confiável ou VPN e HTTPS reverse proxy. Troque a chave de API antes de usar.
 
-## Arquitetura prevista
-- **Frontend:** painel web publicado na Vercel.
-- **API:** serviço autenticado para gerir inventário, configurações e eventos.
-- **Banco:** PostgreSQL para dispositivos, utilizadores, alertas e configurações; armazenamento de séries temporais a definir.
-- **Motor Linux:** serviço contínuo para ICMP/Ping, SNMP v1/v2c/v3, agendamento e recolha de métricas.
-- **Agente remoto (futuro):** recolha segura em redes distribuídas.
-- **Pacote Debian:** serviços systemd, configuração, atualização e remoção controladas via `.deb`.
+## Compilar e executar em desenvolvimento
+Requisitos: Go 1.22+, Linux e ping. Para SNMP, instale o pacote snmp.
 
-## Desenvolvimento local
-A interface atual é um único ficheiro estático: abrir `index.html` num navegador ou servir a pasta com qualquer servidor estático.
+    cd agent
+    go build -o netvigia .
+    NETVIGIA_CONFIG=../packaging/config.json ./netvigia
 
-## Roadmap
-1. Modularizar o frontend em TypeScript e testes.
-2. Ligar o repositório à Vercel com deploy automático.
-3. Implementar autenticação e API com autorização por função.
-4. Criar schema e migrações de banco.
-5. Desenvolver e testar o motor ICMP e o coletor SNMP.
-6. Guardar métricas e eventos reais e criar regras de alertas.
-7. Empacotar o serviço Linux num `.deb` e testar instalação/atualização.
+Abra http://127.0.0.1:8787. Configure endereço de escuta e chave em packaging/config.json ou /etc/netvigia/config.json.
 
-## Segurança
-Não inserir segredos no frontend. Comunidades SNMP, credenciais, tokens e chaves devem ser geridos no backend, com armazenamento protegido e controlo de acesso. Não monitorar endereços sem autorização.
+## Criar pacote .deb
+Em Debian/Ubuntu:
+
+    sudo apt-get update
+    sudo apt-get install -y golang-go dpkg-dev snmp iputils-ping
+    ./scripts/build-deb.sh 0.1.0 amd64
+    sudo dpkg -i build/netvigia_0.1.0_amd64.deb
+    sudo nano /etc/netvigia/config.json
+    sudo systemctl restart netvigia
+    sudo systemctl status netvigia --no-pager
+
+O pacote gerado fica em build/netvigia_0.1.0_amd64.deb. A compilação precisa de ambiente Linux Debian/Ubuntu; GitHub/Vercel ainda não geram um pacote testado automaticamente.
+
+## API
+- GET /api/health — sem chave.
+- GET /api/devices — com X-API-Key ou Authorization: Bearer <chave>.
+- POST /api/devices — exemplo JSON: {"name":"Roteador TP-Link","address":"192.168.1.1","type":"router","interval_minutes":60,"snmp_community":"SOMENTE-LOCAL","interface_index":1}.
+- GET /api/metrics?device_id=dev-...
+- POST /api/agent/metrics — exemplo: {"device_id":"dev-...","name":"PC-WINDOWS","metrics":{"cpu_percent":12.4,"memory_used_percent":54.2}}.
+- POST /api/check-now — dispara verificações manuais.
+
+## Como ligar os equipamentos
+### Roteador TP-Link
+1. Descubra o IP LAN no Windows com ipconfig; o Gateway predefinido costuma ser o roteador.
+2. Consulte o manual do modelo/firmware: nem todos os TP-Link suportam SNMP. Se houver opção, ative SNMPv2c, restrinja o gestor ao IP do NetVigia e use comunidade de leitura forte. Nunca exponha SNMP à Internet.
+3. Cadastre o IP: Ping determina online/offline. SNMP pode trazer uptime e octetos da interface se snmp estiver instalado e o índice da interface for conhecido.
+4. Para mostrar velocidade de download/upload em bits/s, é necessário recolher contadores em dois instantes e calcular a diferença por segundo. O MVP ainda só guarda contadores, não calcula a taxa final.
+
+### Computador Windows
+1. Cadastre o PC com tipo windows e o endereço/IP.
+2. Edite agents/windows/netvigia-agent.ps1 com URL do servidor, ID do equipamento e chave.
+3. Agende no Task Scheduler (por exemplo, a cada 5 minutos) executando PowerShell. O servidor precisa ser acessível pela LAN/VPN; libere a porta 8787 apenas para redes confiáveis.
+4. O script envia CPU, memória, espaço livre em disco e uptime.
+
+### Servidor Docker/Linux
+- Instale NetVigia no host Linux para monitorar a disponibilidade dos equipamentos e servir o painel local.
+- O script agents/linux/netvigia-agent.sh envia métricas básicas do host e quantidade de containers ativos. Acesso ao socket Docker equivale a privilégios elevados; avalie esse risco antes de conceder permissão.
+- Para métricas detalhadas por container, a próxima etapa é integrar Docker Engine API.
+
+## Interface online e rede privada
+A Vercel hospeda o painel estático, mas o navegador no site não alcança automaticamente uma API privada na LAN. Para operar remotamente, publique a API atrás de HTTPS e autenticação forte via VPN/reverse proxy; não crie port-forward aberto para a porta 8787. O pacote .deb também serve o painel local em http://IP-DO-SERVIDOR:8787.
